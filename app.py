@@ -12,7 +12,6 @@ DATA_DIR = ROOT / 'data'
 DATA_FILE = DATA_DIR / 'messages.json'
 DASHBOARD_PASSWORD = os.environ.get('DASHBOARD_PASSWORD', 'johnkosmas77')
 
-
 class SiteHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self._handle_request()
