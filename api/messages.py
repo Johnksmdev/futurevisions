@@ -18,7 +18,7 @@ def write_messages(messages):
     DATA_FILE.write_text(json.dumps(messages, indent=2), encoding='utf-8')
 
 
-def handler(request):
+def app(request):
     method = request.get('method', 'GET')
 
     if method == 'GET':
@@ -73,3 +73,7 @@ def handler(request):
         'headers': {'Content-Type': 'application/json'},
         'body': json.dumps({'error': 'Method not allowed'})
     }
+
+
+handler = app
+application = app

@@ -15,7 +15,7 @@ def read_messages():
     return []
 
 
-def handler(request):
+def app(request):
     headers = request.get('headers', {})
     password = headers.get('x-dashboard-password', '')
 
@@ -38,3 +38,7 @@ def handler(request):
             'messages': messages[:10],
         })
     }
+
+
+handler = app
+application = app
