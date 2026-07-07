@@ -5,6 +5,20 @@ from pathlib import Path
 DATA_FILE = Path('/tmp/messages.json')
 
 
+def _read_body(request):
+    body = request.get('body', '{}') if isinstance(request, dict) else '{}'
+    if isinstance(body, (bytes, bytearray)):
+        body = body.decode('utf-8')
+    if body is None:
+        body = '{}'
+    if isinstance(body, str):
+        try:
+            return json.loads(body)
+        except json.JSONDecodeError:
+            return {}
+    return body if isinstance(body, dict) else {}
+
+
 def read_messages():
     if DATA_FILE.exists():
         try:
@@ -19,7 +33,7 @@ def write_messages(messages):
 
 
 def app(request):
-    method = request.get('method', 'GET')
+    method = request.get('method', request.get('httpMethod', 'GET')) if isinstance(request, dict) else 'GET'
 
     if method == 'GET':
         return {
@@ -29,16 +43,13 @@ def app(request):
         }
 
     if method == 'POST':
-        payload = request.get('body', '{}')
-        if isinstance(payload, str):
-            try:
-                payload = json.loads(payload)
-            except json.JSONDecodeError:
-                return {
-                    'statusCode': HTTPStatus.BAD_REQUEST,
-                    'headers': {'Content-Type': 'application/json'},
-                    'body': json.dumps({'error': 'Invalid JSON body.'})
-                }
+        payload = _read_body(request)
+        if not isinstance(payload, dict):
+            return {
+                'statusCode': HTTPStatus.BAD_REQUEST,
+                'headers': {'Content-Type': 'application/json'},
+                'body': json.dumps({'error': 'Invalid JSON body.'})
+            }
 
         name = (payload.get('name') or '').strip()
         email = (payload.get('email') or '').strip()

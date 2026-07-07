@@ -16,8 +16,10 @@ def read_messages():
 
 
 def app(request):
-    headers = request.get('headers', {})
-    password = headers.get('x-dashboard-password', '')
+    headers = request.get('headers', {}) if isinstance(request, dict) else {}
+    if not isinstance(headers, dict):
+        headers = {}
+    password = headers.get('x-dashboard-password', headers.get('X-Dashboard-Password', ''))
 
     if password != DASHBOARD_PASSWORD:
         return {
