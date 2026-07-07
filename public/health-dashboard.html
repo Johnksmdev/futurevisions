@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="el">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Πίνακας Ελέγχου Διαχειριστή</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <style>
+      body { padding-bottom: 3rem; }
+      .dashboard-shell { max-width: 1100px; margin: 0 auto; padding: 2rem 1.2rem; }
+      .auth-card, .status-card, .message-card { background: var(--panel); border: 1px solid var(--border); border-radius: 1.2rem; padding: 1.2rem; margin-bottom: 1rem; }
+      .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+      .muted { color: var(--muted); }
+      .pill { display: inline-block; padding: 0.35rem 0.7rem; border-radius: 999px; background: rgba(79, 209, 197, 0.16); color: var(--accent); font-size: 0.8rem; margin-bottom: 0.6rem; }
+      .hidden { display: none; }
+      @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
+    </style>
+  </head>
+  <body>
+    <div class="dashboard-shell">
+      <div id="auth-card" class="auth-card">
+        <h1>Προστατευμένο Περιβάλλον Διαχειριστή</h1>
+        <p class="muted">Αυτό το περιβάλλον είναι διαθέσιμο μόνο σε διαχειριστές και απαιτεί κωδικό πρόσβασης για να δείτε την κατάσταση του συστήματος και τις πρόσφατες υποβολές.</p>
+        <input id="password-input" type="password" placeholder="Κωδικός πρόσβασης" />
+        <button id="unlock-btn" class="button button--primary" type="button">Άνοιγμα πίνακα</button>
+        <div class="muted" style="margin-top: 1rem;">
+          <strong>Γιατί υπάρχει αυτό το site:</strong>
+          <ul>
+            <li>Για να παρακολουθείται η κατάσταση του συστήματος με ασφάλεια.</li>
+            <li>Για να διατηρείται οργανωμένη η πρόσβαση στις υποβολές και τα μηνύματα.</li>
+            <li>Για να παρέχεται ένα κλειστό περιβάλλον διαχείρισης μόνο για διαχειριστές.</li>
+          </ul>
+        </div>
+        <a class="button button--secondary" href="/" style="margin-top: 0.8rem;">Επιστροφή στην αρχική σελίδα</a>
+        <p id="auth-message" class="muted"></p>
+      </div>
+
+      <div id="dashboard-content" class="hidden">
+        <a class="button button--secondary" href="/" style="margin-bottom: 1rem;">Shut down</a>
+        <div class="grid">
+          <div class="status-card">
+            <span class="pill">Backend</span>
+            <h2 id="backend-status">Φόρτωση...</h2>
+            <p id="backend-summary" class="muted"></p>
+          </div>
+          <div class="status-card">
+            <span class="pill">Μηνύματα</span>
+            <h2 id="message-count">0</h2>
+            <p id="latest-message" class="muted"></p>
+          </div>
+        </div>
+        <div id="messages-container"></div>
+      </div>
+    </div>
+
+    <script>
+      const passwordInput = document.getElementById('password-input');
+      const unlockBtn = document.getElementById('unlock-btn');
+      const authMessage = document.getElementById('auth-message');
+      const authCard = document.getElementById('auth-card');
+      const dashboardContent = document.getElementById('dashboard-content');
+      const backendStatus = document.getElementById('backend-status');
+      const backendSummary = document.getElementById('backend-summary');
+      const messageCount = document.getElementById('message-count');
+      const latestMessage = document.getElementById('latest-message');
+      const messagesContainer = document.getElementById('messages-container');
+
+      async function loadDashboard() {
+        const password = passwordInput.value;
+        try {
+          const response = await fetch('/api/dashboard', {
+            headers: { 'X-Dashboard-Password': password }
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.error || 'Unauthorized');
+          }
+
+          authCard.classList.add('hidden');
+          dashboardContent.classList.remove('hidden');
+          backendStatus.textContent = data.status === 'ok' ? 'Λειτουργεί κανονικά' : 'Εκτός σύνδεσης';
+          backendSummary.textContent = `${data.service} · ${data.totalMessages} αποθηκευμένες υποβολές`;
+          messageCount.textContent = data.totalMessages;
+          latestMessage.textContent = data.latestMessageAt ? `Τελευταία: ${new Date(data.latestMessageAt).toLocaleString()}` : 'Δεν υπάρχουν ακόμη υποβολές';
+          messagesContainer.innerHTML = (data.messages || []).map((entry) => `
+            <article class="message-card">
+              <strong>${entry.name}</strong>
+              <p>${entry.message}</p>
+              <small class="muted">${entry.email} · ${new Date(entry.createdAt).toLocaleString()}</small>
+            </article>
+          `).join('');
+        } catch (error) {
+          authMessage.textContent = error.message;
+        }
+      }
+
+      unlockBtn.addEventListener('click', loadDashboard);
+      passwordInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+          loadDashboard();
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="el">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Future Visions Lab</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="site-brand">
+      <span class="site-brand__mark">j</span>
+      <span class="site-brand__text">johnksmdev</span>
+    </div>
+    <header class="hero">
+      <div class="hero__content">
+        <p class="eyebrow hero__badge">Πίνακας οραμάτων • Ιδέες για το μέλλον • Άγνωστες εμπειρίες</p>
+        <h1>Τι θα έπρεπε να υπάρχει στο διαδίκτυο που δεν υπάρχει ακόμα;</h1>
+        <p class="hero__text">
+          Το Future Visions Lab καλεί τους curious minds να φανταστούν προϊόντα, κόσμους και εμπειρίες που φαίνονται αδύνατα σήμερα αλλά ανήκουν στο αύριο.
+        </p>
+        <div class="hero__actions">
+          <a class="button button--primary" href="#contact">Μοίρασε μια ιδέα</a>
+          <a class="button button--secondary" href="#features">Δες το όραμα</a>
+          <a class="button button--secondary" href="/health-dashboard">Άνοιγμα dashboard υγείας</a>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section id="features" class="section">
+        <h2>Γιατί υπάρχει αυτός ο χώρος</h2>
+        <div class="card-grid">
+          <article class="card">
+            <h3>Αόρατες εμπειρίες</h3>
+            <p>Καταγραφή ιδεών για ψηφιακούς κόσμους, εργαλεία και στιγμές που δεν έχουν υπάρξει ποτέ πριν.</p>
+          </article>
+          <article class="card">
+            <h3>Σήματα του μέλλοντος</h3>
+            <p>Περιγράφει το είδος του διαδικτύου που θα ήθελες να υπήρχε — περίεργο, όμορφο ή ριζικά χρήσιμο.</p>
+          </article>
+          <article class="card">
+            <h3>Συλλογική φαντασία</h3>
+            <p>Συγκέντρωση τολμηρών οραμάτων από ανθρώπους που θέλουν να χτίσουν το επόμενο αδύνατο πράγμα.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section section--alt" id="contact">
+        <div class="contact-layout">
+          <div>
+            <p class="eyebrow">Υποβολή ιδέας</p>
+            <h2>Πες μας το μέλλον που θέλεις να ανακαλύψεις.</h2>
+            <p>Μοιράσου μια ιδέα, μια αίσθηση ή μια περίεργη εφεύρεση που πιστεύεις ότι το διαδίκτυο θα πρέπει κάποτε να καταφέρει να κάνει εφικτή.</p>
+          </div>
+          <form id="contact-form" class="form-card">
+            <input type="text" id="name" name="name" placeholder="Το όνομά σου" required />
+            <input type="email" id="email" name="email" placeholder="Email" required />
+            <textarea id="message" name="message" rows="5" placeholder="Περιέγραψε την ιδέα ή την εμπειρία του μέλλοντος" required></textarea>
+            <button class="button button--primary" type="submit">Αποστολή οράματος</button>
+            <p id="form-status" class="form-status" aria-live="polite"></p>
+          </form>
+        </div>
+      </section>
+
+    </main>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
