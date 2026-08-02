@@ -1,11 +1,11 @@
-import { getMessagesStore, MESSAGES_KEY } from './_lib/blobs.js';
+import { getMessagesStore, readMessages, writeMessages } from './_lib/blobs.js';
 
 const jsonHeaders = { 'Content-Type': 'application/json' };
 
 export default async (req) => {
   try {
     const store = getMessagesStore(req);
-    const messages = (await store.get(MESSAGES_KEY, { type: 'json' })) || [];
+    const messages = await readMessages(store);
 
     if (req.method === 'POST') {
       let payload = null;
@@ -38,7 +38,7 @@ export default async (req) => {
       };
 
       messages.unshift(entry);
-      await store.set(MESSAGES_KEY, messages);
+      await writeMessages(store, messages);
 
       return new Response(JSON.stringify(entry), {
         status: 201,

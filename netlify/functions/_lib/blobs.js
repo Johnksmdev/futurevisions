@@ -58,3 +58,38 @@ export function getMessagesStore(req, _context) {
   return getStore({ name: STORE_NAME });
 }
 
+/**
+ * Safely read the messages array from the store.
+ *
+ * The store is read as raw text and parsed manually so that a corrupted
+ * or legacy entry (e.g. the literal string `[object Object]` written by an
+ * earlier `store.set(key, array)` bug) is handled gracefully: it is reset
+ * to an empty array and treated as such, instead of throwing a JSON parse
+ * error to the caller.
+ */
+export async function readMessages(store) {
+  try {
+    const raw = await store.get(MESSAGES_KEY);
+    if (raw == null) {
+      return [];
+    }
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    // Corrupted or non-array legacy content — reset to a valid empty array.
+    try {
+      await store.setJSON(MESSAGES_KEY, []);
+    } catch {
+      // Ignore reset failures; the caller will just see an empty list.
+    }
+    return [];
+  }
+}
+
+/**
+ * Persist the messages array as a proper JSON string blob.
+ */
+export async function writeMessages(store, messages) {
+  await store.setJSON(MESSAGES_KEY, messages);
+}
+

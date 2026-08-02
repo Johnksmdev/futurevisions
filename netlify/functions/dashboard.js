@@ -1,4 +1,4 @@
-import { getMessagesStore, MESSAGES_KEY } from './_lib/blobs.js';
+import { getMessagesStore, readMessages } from './_lib/blobs.js';
 
 const jsonHeaders = { 'Content-Type': 'application/json' };
 const DASHBOARD_PASSWORD = process.env.DASHBOARD_PASSWORD || 'johnkosmas77';
@@ -29,7 +29,7 @@ export default async (req) => {
 
   try {
     const store = getMessagesStore(req);
-    const messages = (await store.get(MESSAGES_KEY, { type: 'json' })) || [];
+    const messages = await readMessages(store);
 
     return new Response(
       JSON.stringify({
