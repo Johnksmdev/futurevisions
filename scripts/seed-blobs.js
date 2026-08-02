@@ -20,7 +20,7 @@ const dataPath = path.join(__dirname, '..', 'data', 'messages.json');
 const messages = JSON.parse(await fs.readFile(dataPath, 'utf8'));
 
 const store = getStore({ siteID, token, name: 'messages' });
-await store.set('messages', messages);
+await store.setJSON('messages', messages);
 
 console.log(`Seeded ${messages.length} messages to Netlify Blobs store "messages".`);
 

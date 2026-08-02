@@ -1,4 +1,4 @@
-import { getStore } from '@netlify/blobs';
+import { getMessagesStore, MESSAGES_KEY } from './_lib/blobs.js';
 
 const jsonHeaders = { 'Content-Type': 'application/json' };
 const DASHBOARD_PASSWORD = process.env.DASHBOARD_PASSWORD || 'johnkosmas77';
@@ -28,8 +28,8 @@ export default async (req) => {
   }
 
   try {
-    const store = getStore({ name: 'messages' });
-    const messages = (await store.get('messages', { type: 'json' })) || [];
+    const store = getMessagesStore(req);
+    const messages = (await store.get(MESSAGES_KEY, { type: 'json' })) || [];
 
     return new Response(
       JSON.stringify({
@@ -43,7 +43,10 @@ export default async (req) => {
     );
   } catch (error) {
     return new Response(
-      JSON.stringify({ error: 'Failed to load dashboard data.', detail: String(error) }),
+      JSON.stringify({
+        error: 'Failed to load dashboard data.',
+        detail: String(error?.message || error),
+      }),
       { status: 500, headers: jsonHeaders },
     );
   }
