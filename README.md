@@ -41,7 +41,7 @@ API endpoints (served under `/api/*`, rewritten to functions):
 - `GET /api/health`
 - `GET /api/stats`
 - `GET / POST /api/messages`
-- `GET /api/dashboard` (requires `X-Dashboard-Password` header)
+- `POST /api/dashboard` (send `{ "password": "..." }` in JSON body)
 
 ### Local development with Netlify CLI
 

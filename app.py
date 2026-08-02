@@ -77,6 +77,31 @@ class SiteHandler(BaseHTTPRequestHandler):
                 self._send_json({'authorized': False}, status=HTTPStatus.UNAUTHORIZED)
             return
 
+        if parsed.path == '/api/dashboard':
+            content_length = int(self.headers.get('Content-Length', '0'))
+            body = self.rfile.read(content_length).decode('utf-8') if content_length else '{}'
+
+            try:
+                payload = json.loads(body or '{}')
+            except json.JSONDecodeError:
+                self._send_json({'error': 'Invalid JSON body.'}, status=HTTPStatus.BAD_REQUEST)
+                return
+
+            password = (payload.get('password') or '').strip()
+            if password != DASHBOARD_PASSWORD:
+                self._send_json({'error': 'Unauthorized'}, status=HTTPStatus.UNAUTHORIZED)
+                return
+
+            messages = self._read_messages()
+            self._send_json({
+                'status': 'ok',
+                'service': 'jj-website-backend',
+                'totalMessages': len(messages),
+                'latestMessageAt': messages[0]['createdAt'] if messages else None,
+                'messages': messages[:10],
+            })
+            return
+
         if parsed.path != '/api/messages':
             self._send_json({'error': 'Not found'}, status=HTTPStatus.NOT_FOUND)
             return

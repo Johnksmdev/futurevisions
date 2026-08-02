@@ -15,11 +15,34 @@ def read_messages():
     return []
 
 
+def _read_body(request):
+    body = request.get('body', '{}') if isinstance(request, dict) else '{}'
+    if isinstance(body, (bytes, bytearray)):
+        body = body.decode('utf-8')
+    if body is None:
+        body = '{}'
+    if isinstance(body, str):
+        try:
+            return json.loads(body)
+        except json.JSONDecodeError:
+            return {}
+    return body if isinstance(body, dict) else {}
+
+
 def app(request):
+    method = request.get('method', request.get('httpMethod', 'GET')) if isinstance(request, dict) else 'GET'
+
     headers = request.get('headers', {}) if isinstance(request, dict) else {}
     if not isinstance(headers, dict):
         headers = {}
-    password = headers.get('x-dashboard-password', headers.get('X-Dashboard-Password', ''))
+    header_password = headers.get('x-dashboard-password', headers.get('X-Dashboard-Password', ''))
+
+    payload = _read_body(request)
+    body_password = payload.get('password') or ''
+    if not isinstance(body_password, str):
+        body_password = str(body_password)
+
+    password = body_password.strip() or header_password.strip()
 
     if password != DASHBOARD_PASSWORD:
         return {

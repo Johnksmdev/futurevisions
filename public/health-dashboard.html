@@ -67,9 +67,16 @@
 
       async function loadDashboard() {
         const password = passwordInput.value;
+        if (!password) {
+          authMessage.textContent = 'Εισάγετε τον κωδικό πρόσβασης.';
+          return;
+        }
         try {
+          authMessage.textContent = 'Φόρτωση...';
           const response = await fetch('/api/dashboard', {
-            headers: { 'X-Dashboard-Password': password }
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password }),
           });
 
           const data = await response.json();

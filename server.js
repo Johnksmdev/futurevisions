@@ -86,6 +86,43 @@ app.post('/api/messages', async (req, res, next) => {
   }
 });
 
+const DASHBOARD_PASSWORD = process.env.DASHBOARD_PASSWORD || 'johnkosmas77';
+
+async function buildDashboardPayload() {
+  const messages = await readMessages();
+  return {
+    status: 'ok',
+    service: 'jj-website-backend',
+    totalMessages: messages.length,
+    latestMessageAt: messages[0]?.createdAt ?? null,
+    messages: messages.slice(0, 10),
+  };
+}
+
+app.get('/api/dashboard', async (req, res, next) => {
+  try {
+    const provided = String(req.headers['x-dashboard-password'] || '');
+    if (provided !== DASHBOARD_PASSWORD) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    res.json(await buildDashboardPayload());
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.post('/api/dashboard', async (req, res, next) => {
+  try {
+    const provided = String(req.body?.password || req.headers['x-dashboard-password'] || '');
+    if (provided !== DASHBOARD_PASSWORD) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    res.json(await buildDashboardPayload());
+  } catch (error) {
+    next(error);
+  }
+});
+
 app.use((err, _req, res, _next) => {
   console.error(err);
   res.status(500).json({ error: 'Internal server error.' });
