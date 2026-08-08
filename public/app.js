@@ -91,7 +91,6 @@ const chatCloseBtn = document.getElementById('chat-close-btn');
 let chatName = localStorage.getItem(NAME_KEY) || '';
 let chatSocket = null;
 let pollTimer = null;
-const renderedMessageIds = new Set();
 
 function escapeHtml(value) {
   return String(value)
@@ -134,12 +133,7 @@ function closeChatWidget() {
   }
 }
 
-function renderMessage(entry) {
-  if (!entry || entry.id == null || renderedMessageIds.has(entry.id)) {
-    return;
-  }
-  renderedMessageIds.add(entry.id);
-
+function createMessageNode(entry) {
   const isOwn = entry.name === chatName;
   const bubble = document.createElement('div');
   bubble.className = `chat-msg${isOwn ? ' chat-msg--own' : ''}`;
@@ -163,54 +157,30 @@ function renderMessage(entry) {
 
   bubble.appendChild(meta);
   bubble.appendChild(body);
-  chatMessagesEl.appendChild(bubble);
+  return bubble;
+}
+
+function renderMessage(entry) {
+  if (!entry || entry.id == null) return;
+  // Avoid duplicates: if a node with this id already exists, skip.
+  if (chatMessagesEl.querySelector(`[data-id="${entry.id}"]`)) return;
+  chatMessagesEl.appendChild(createMessageNode(entry));
   chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
 }
 
 function renderHistory(messages) {
-  // Rebubble the full list while preserving existing DOM nodes so that
-  // messages already shown (e.g. own optimistic send) are not duplicated.
+  // Rebuild the full list from the server, deduplicating by id.
+  chatMessagesEl.innerHTML = '';
   if (!messages || messages.length === 0) {
-    if (renderedMessageIds.size === 0) {
-      chatMessagesEl.innerHTML = '<p class="chat-widget__empty">Καμία συνομιλία ακόμα. Γίνε ο πρώτος!</p>';
-    }
+    chatMessagesEl.innerHTML = '<p class="chat-widget__empty">Καμία συνομιλία ακόμα. Γίνε ο πρώτος!</p>';
     return;
   }
-
-  const existing = Array.from(chatMessagesEl.querySelectorAll('.chat-msg'));
-  const existingById = {};
-  existing.forEach((node) => {
-    existingById[node.dataset.id] = node;
-  });
-
   const seen = new Set();
-  const toAdd = [];
-  let needsAppend = false;
-
   messages.forEach((entry) => {
-    if (!entry || entry.id == null) return;
+    if (!entry || entry.id == null || seen.has(entry.id)) return;
     seen.add(entry.id);
-    const node = existingById[entry.id];
-    if (node) {
-      // Re-append in the newest order at the end.
-      if (needsAppend) {
-        chatMessagesEl.appendChild(node);
-      }
-      existingById[entry.id] = node;
-    } else {
-      toAdd.push(entry);
-    }
-    needsAppend = true;
+    chatMessagesEl.appendChild(createMessageNode(entry));
   });
-
-  // Remove message nodes no longer present in the server list.
-  Object.keys(existingById).forEach((id) => {
-    if (!seen.has(id) && existingById[id].parentNode) {
-      existingById[id].parentNode.removeChild(existingById[id]);
-    }
-  });
-
-  toAdd.forEach((entry) => renderMessage(entry));
   chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
 }
 
@@ -218,7 +188,6 @@ async function loadChatHistory() {
   try {
     const response = await fetch('/api/chat/messages');
     const messages = await response.json();
-    loadedInitialMessages = true;
     renderHistory(messages);
   } catch (error) {
     console.error('Failed to load chat history:', error);
