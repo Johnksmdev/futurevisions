@@ -1,6 +1,7 @@
 import json
 import mimetypes
 import os
+import time
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -10,6 +11,7 @@ ROOT = Path(__file__).resolve().parent
 PUBLIC_DIR = ROOT / 'public'
 DATA_DIR = ROOT / 'data'
 DATA_FILE = DATA_DIR / 'messages.json'
+CHAT_DATA_FILE = DATA_DIR / 'chat-messages.json'
 DASHBOARD_PASSWORD = os.environ.get('DASHBOARD_PASSWORD', 'johnkosmas77')
 
 class SiteHandler(BaseHTTPRequestHandler):
@@ -37,6 +39,11 @@ class SiteHandler(BaseHTTPRequestHandler):
 
         if path == '/api/messages':
             messages = self._read_messages()
+            self._send_json(messages, head=head)
+            return
+
+        if path == '/api/chat/messages':
+            messages = self._read_chat_messages()
             self._send_json(messages, head=head)
             return
 
@@ -100,6 +107,35 @@ class SiteHandler(BaseHTTPRequestHandler):
                 'latestMessageAt': messages[0]['createdAt'] if messages else None,
                 'messages': messages[:10],
             })
+            return
+
+        if parsed.path == '/api/chat/messages':
+            content_length = int(self.headers.get('Content-Length', '0'))
+            body = self.rfile.read(content_length).decode('utf-8') if content_length else '{}'
+
+            try:
+                payload = json.loads(body or '{}')
+            except json.JSONDecodeError:
+                self._send_json({'error': 'Invalid JSON body.'}, status=HTTPStatus.BAD_REQUEST)
+                return
+
+            name = (payload.get('name') or '').strip()[:60]
+            message = (payload.get('message') or '').strip()[:2000]
+
+            if not name or not message:
+                self._send_json({'error': 'Name and message are required.'}, status=HTTPStatus.BAD_REQUEST)
+                return
+
+            chat_messages = self._read_chat_messages()
+            entry = {
+                'id': str(int(time.time() * 1000)),
+                'name': name,
+                'message': message,
+                'createdAt': self._now_iso(),
+            }
+            chat_messages.append(entry)
+            self._write_chat_messages(chat_messages)
+            self._send_json(entry, status=HTTPStatus.CREATED)
             return
 
         if parsed.path != '/api/messages':
@@ -190,6 +226,19 @@ class SiteHandler(BaseHTTPRequestHandler):
     def _write_messages(self, messages):
         DATA_DIR.mkdir(parents=True, exist_ok=True)
         DATA_FILE.write_text(json.dumps(messages, indent=2), encoding='utf-8')
+
+    def _read_chat_messages(self):
+        if not CHAT_DATA_FILE.exists():
+            return []
+        try:
+            parsed = json.loads(CHAT_DATA_FILE.read_text(encoding='utf-8'))
+            return parsed if isinstance(parsed, list) else []
+        except json.JSONDecodeError:
+            return []
+
+    def _write_chat_messages(self, messages):
+        DATA_DIR.mkdir(parents=True, exist_ok=True)
+        CHAT_DATA_FILE.write_text(json.dumps(messages, indent=2), encoding='utf-8')
 
     @staticmethod
     def _now_iso():

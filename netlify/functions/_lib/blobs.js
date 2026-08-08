@@ -1,7 +1,9 @@
 import { getStore, connectLambda } from '@netlify/blobs';
 
 export const STORE_NAME = 'messages';
+export const CHAT_STORE_NAME = 'chat';
 export const MESSAGES_KEY = 'messages';
+export const CHAT_KEY = 'chat-messages';
 
 function base64Decode(input) {
   if (typeof Buffer !== 'undefined') {
@@ -59,6 +61,30 @@ export function getMessagesStore(req, _context) {
 }
 
 /**
+ * Returns the chat messages store using the same Blobs context resolution
+ * as the messages store, but pointing at the dedicated "chat" store.
+ */
+export function getChatStore(req, context) {
+  if (req && typeof req === 'object' && typeof req.blobs === 'string') {
+    connectLambda(req);
+  }
+
+  const ctx = getContextFromProcessEnv();
+  if (ctx && ctx.siteID && ctx.token) {
+    return getStore({
+      name: CHAT_STORE_NAME,
+      siteID: ctx.siteID,
+      token: ctx.token,
+      apiURL: ctx.apiURL,
+      edgeURL: ctx.edgeURL,
+      uncachedEdgeURL: ctx.uncachedEdgeURL,
+    });
+  }
+
+  return getStore({ name: CHAT_STORE_NAME });
+}
+
+/**
  * Safely read the messages array from the store.
  *
  * The store is read as raw text and parsed manually so that a corrupted
@@ -91,5 +117,33 @@ export async function readMessages(store) {
  */
 export async function writeMessages(store, messages) {
   await store.setJSON(MESSAGES_KEY, messages);
+}
+
+/**
+ * Safely read the chat messages array from the store.
+ */
+export async function readChatMessages(store) {
+  try {
+    const raw = await store.get(CHAT_KEY);
+    if (raw == null) {
+      return [];
+    }
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    try {
+      await store.setJSON(CHAT_KEY, []);
+    } catch {
+      // Ignore reset failures; the caller will just see an empty list.
+    }
+    return [];
+  }
+}
+
+/**
+ * Persist the chat messages array as a JSON string blob.
+ */
+export async function writeChatMessages(store, messages) {
+  await store.setJSON(CHAT_KEY, messages);
 }
 

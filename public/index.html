@@ -22,6 +22,7 @@
           <a class="button button--primary" href="#contact">Μοίρασε μια ιδέα</a>
           <a class="button button--secondary" href="#features">Δες το όραμα</a>
           <a class="button button--secondary" href="/health-dashboard">Admin Content</a>
+          <button id="live-chat-btn" class="button button--secondary" type="button">Live Chat</button>
         </div>
       </div>
     </header>
@@ -61,8 +62,37 @@
           </form>
         </div>
       </section>
-
     </main>
+
+    <!-- Live Chat name prompt modal -->
+    <div id="chat-name-modal" class="chat-modal hidden" role="dialog" aria-modal="true">
+      <div class="chat-modal__card">
+        <h2>Εισάγετε το όνομά σας</h2>
+        <p class="chat-modal__text">Πώς θα θέλατε να σας βλέπουν οι άλλοι στο ζωντανό chat;</p>
+        <input id="chat-name-input" type="text" placeholder="Το όνομά σου" maxlength="60" autocomplete="off" />
+        <div class="chat-modal__actions">
+          <button id="chat-name-cancel" class="button button--secondary" type="button">Ακύρωση</button>
+          <button id="chat-name-enter" class="button button--primary" type="button">Είσοδος στο chat</button>
+        </div>
+        <p id="chat-name-error" class="form-status"></p>
+      </div>
+    </div>
+
+    <!-- Live Chat widget -->
+    <div id="chat-widget" class="chat-widget hidden">
+      <div class="chat-widget__header">
+        <span class="chat-widget__title">
+          <span class="chat-widget__dot"></span>
+          Live Chat
+        </span>
+        <button id="chat-close-btn" class="chat-widget__close" type="button" aria-label="Κλείσιμο chat">✕</button>
+      </div>
+      <div id="chat-messages" class="chat-widget__messages"></div>
+      <div class="chat-widget__input">
+        <input id="chat-input" type="text" placeholder="Γράψε ένα μήνυμα..." maxlength="2000" autocomplete="off" />
+        <button id="chat-send-btn" class="chat-widget__send" type="button">Αποστολή</button>
+      </div>
+    </div>
 
     <script src="/app.js"></script>
   </body>
